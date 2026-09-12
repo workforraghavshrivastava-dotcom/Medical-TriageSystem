@@ -1,0 +1,7 @@
+{
+  "name": "AegisTriage - AI Medical Triage System",
+  "description": "HIPAA-compliant multimodal AI medical triage platform featuring symptom analysis, EHR integration, clinician command center, secure messaging, and emergency dispatch alerts.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
