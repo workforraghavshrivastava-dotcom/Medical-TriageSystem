@@ -1,0 +1,222 @@
+# MySwaasth: Multimodal AI Medical Triage & Emergency Healthcare System
+
+> **An ABDM & ESI v4-aligned emergency triage intelligence engine, 102 National Ambulance dispatch, and clinician command center powered by multimodal generative AI.**
+
+---
+
+## 🏥 Overview
+
+**MySwaasth** is an intelligent emergency medical triage and clinical decision support system (CDSS) built to bridge patient intake and acute care workflows. By synthesizing **unstructured symptom narratives, voice dictations, clinical imagery (dermatology, ECG rhythm strips, wound trauma), and real-time hemodynamic telemetry**, MySwaasth classifies patient acuity according to the gold-standard **Emergency Severity Index (ESI v4)**.
+
+Designed for emergency departments, urgent care centers, and pre-hospital triage units, MySwaasth provides:
+- **Multimodal Patient Intake**: Integrated speech-to-text, clinical image analysis, smart vitals sync, and interactive pain rating.
+- **Evidence-Based Clinical Decision Support**: Differential diagnosis generation, red-flag detection, abnormal vitals alerts, and pre-arrival care recommendations.
+- **Clinician Triage Workstation**: Real-time ED queue management, ESI acuity overrides with audit justification, and signed clinical disposition orders.
+- **Immediate 102 National Ambulance Dispatch**: Geolocation-aware ambulance telemetry with live ETA countdowns, direct 102/108/112 dialing, and protocolized Indian first aid guidance.
+- **Ayushman Bharat Digital Health (ABHA) Locker**: 14-digit ABHA ID integration with QR code, PM-JAY ₹5,00,000 health cover status, and linked digital health records.
+- **Emergency Casualty Hospital Finder**: Real-time locator for AIIMS JPN Apex Trauma Centre, Safdarjung, and NABH accredited hospitals with live ICU bed counts.
+- **Zero-Friction Minimalist Emergency Mode**: Designed for patients or bystanders during urgent crises who have no time to fill lengthy forms — 1-tap symptom chips and instant triage.
+- **HL7 FHIR R4 Interoperability & HIPAA/ABDM Privacy**: Certified data exchange bundles (Patient, Encounter, Observation, Condition), Safe Harbor PHI de-identification, and an immutable cryptographic audit log.
+
+---
+
+## 📸 Key Features & Architecture Breakdown
+
+### 1. Multimodal Patient Symptom Intake Engine
+
+The intake module allows patients and emergency triage nurses to record comprehensive medical histories across multiple modalities simultaneously:
+
+![Multimodal Patient Intake Engine](./public/screenshots/triage-intake.jpg)
+
+- **Unstructured Chief Complaint & Voice Dictation**: Patients can type their symptoms or record voice notes using speech-to-text with audio playback and transcription.
+- **Clinical Image & Diagnostic Upload**: Drag-and-drop support for high-resolution medical imagery, including dermatological rashes, wound trauma, swelling, and diagnostic ECG rhythm strips.
+- **Hemodynamic Telemetry Panel**: Continuous monitoring tiles for:
+  - **Heart Rate (BPM)** with bradycardia/tachycardia alerts
+  - **Blood Pressure (mmHg)** with systolic/diastolic hypertension warnings
+  - **Oxygen Saturation (SpO₂ %)** with hypoxia detection
+  - **Respiratory Rate (breaths/min)** with tachypnea/bradypnea indicators
+  - **Core Body Temperature (°C)** with fever and hypothermia thresholds
+- **Smart Device Wearable Sync**: One-click telemetry auto-fill simulating streaming physiological parameters from Apple Health, Google Fit, or hospital bedside monitors.
+- **Interactive Wong-Baker 0–10 Pain Scale**: Dynamic severity slider assessing acute pain intensity.
+- **Clinical Scenario Presets**: Instant simulation presets (*Chest Pressure & Dyspnea*, *Acute Appendicitis*, *Thunderclap Headache*, *Anaphylaxis*, *Ankle Trauma*) for rapid clinical testing.
+
+---
+
+### 2. Clinical Decision Support & ESI Acuity Analysis
+
+At the core of MySwaasth is an ESI v4 clinical reasoning engine that computes triage classifications with pathophysiological rationales:
+
+![Clinical Decision Support & ESI Triage](./public/screenshots/triage-results.jpg)
+
+- **Emergency Severity Index (ESI v4) Classification**:
+  - 🔴 **ESI Level 1 (Resuscitation)**: Immediate life-saving intervention required (immediate physician response).
+  - 🟠 **ESI Level 2 (Emergent / High Risk)**: High-risk situation, severe pain/distress, or abnormal vital signs (<15 min response).
+  - 🟡 **ESI Level 3 (Urgent)**: Stable vitals requiring multiple hospital resources (<30 min response).
+  - 🟢 **ESI Level 4 (Less Urgent)**: Stable patient requiring a single hospital resource (<60 min response).
+  - 🔵 **ESI Level 5 (Non-Urgent)**: Stable patient requiring zero diagnostic resources (<120 min response).
+- **Physiological Red Flag Detection**: Automated highlighting of critical warning signs (e.g., diaphoresis, radiating substernal pain, sudden neurologic deficits).
+- **Prioritized Differential Diagnoses**: Evidence-weighted candidate etiologies paired with likelihood scores and clinical rationales.
+- **Recommended Clinical Workups**: Prescriptive diagnostic orders (12-lead ECG, troponin labs, contrast CT, bedside ultrasound).
+- **First Aid & Pre-Arrival Guidance**: Actionable interim guidance (e.g., chewable aspirin administration, rest positioning, airway monitoring).
+- **Multilingual Patient Explanations**: Empathetic, jargon-free explanations available in **6 languages**: English, Spanish (Español), Mandarin (中文), French (Français), Arabic (العربية), and Hindi (हिन्दी).
+
+---
+
+### 3. Clinician Command Center & Emergency Triage Queue
+
+The clinician workstation provides emergency physicians, triage nurses, and charge nurses with complete operational oversight:
+
+![Clinician Command Center & Triage Queue](./public/screenshots/clinician-dashboard.jpg)
+
+- **Live Triage Queue**: Sortable, filterable list of active ED cases categorized by ESI priority (`ESI 1–2 Critical`, `ESI 3 Urgent`, `ESI 4–5 Low Acuity`).
+- **Comprehensive Case Inspector**: Direct access to patient demographics, age, biological sex, chief complaints, known medical history, and critical allergy alert badges.
+- **High-Resolution Diagnostic Viewer**: Embedded image inspection for submitted clinical photographs, trauma wounds, and 12-lead rhythm strips.
+- **Physician ESI Override Workflow**: Attending clinicians can modify the AI-assigned ESI level with mandatory clinical justification notes.
+- **Clinical Disposition Sign-Off**: Formal disposition orders (Admit to Inpatient, Admit to ICU, Emergency Department Bed, Urgent Care Referral, Outpatient Discharge) with digital physician signature and timestamped audit logging.
+
+---
+
+### 4. 102 National Emergency Ambulance & Live Paramedic Dispatch Tracker
+
+For critical ESI Level 1 and unstable ESI Level 2 patients, MySwaasth activates an immediate Indian EMS escalation protocol:
+
+![102 Emergency Ambulance Dispatch Modal](./public/screenshots/emergency-dispatch.jpg)
+
+- **One-Tap Emergency Dispatch**: Immediate initiation of 102 National Ambulance Service dispatch with GPS transmit.
+- **GPS Telemetry & Casualty Routing**: Automatic geolocation identification in India and routing to the nearest verified trauma center (e.g., **AIIMS JPN Apex Trauma Centre, Safdarjung Hospital Casualty**).
+- **Live Paramedic Unit Tracking**: Dynamic ETA countdown timer (e.g., *"Unit DL-01-EA-4021: ETA ~5 Minutes"*) with real-time status notifications (*Unit Dispatched*, *En Route*, *Arriving at Scene*).
+- **Protocolized Indian Emergency First Aid**: Step-by-step pre-arrival life-support checklists:
+  - **Cardiac Arrest / Chest Pain**: Chew 1 tablet Disprin (Aspirin 300mg) immediately if not allergic, rest sitting upright, unlock door.
+  - **F.A.S.T. Stroke Protocol**: Facial droop, arm weakness, speech slurring, and exact symptom onset timestamping without oral food/liquids.
+  - **Acute Asthma / Bronchospasm**: Upright leaning posture, 2-4 puffs of Asthalin (Salbutamol) inhaler with spacer.
+  - **Severe Bleeding / Trauma**: Firm direct pressure with clean cloth, elevate limb, and keep patient warm.
+- **Unified Indian Emergency Helplines**: Direct 1-tap dialing for **102** (Free National Ambulance), **108** (Disaster & Advanced Life Support), and **112** (National Unified Emergency).
+
+---
+
+### 5. HL7 FHIR R4 Interoperability & HIPAA Privacy Suite
+
+MySwaasth is engineered to integrate seamlessly into hospital Electronic Health Record (EHR) ecosystems while maintaining strict HIPAA compliance:
+
+![HL7 FHIR R4 Interoperability and HIPAA Audit](./public/screenshots/fhir-interoperability.jpg)
+
+- **HL7 FHIR R4 JSON Export & Import**:
+  - Full interoperability with **Epic Systems, Cerner Millennium, and Allscripts**.
+  - Generates valid FHIR R4 Bundles containing `Patient`, `Encounter`, `Observation` (LOINC-coded vitals and labs), and `Condition` (SNOMED-CT / ICD-10 diagnostic codes).
+- **Safe Harbor PHI De-Identification**:
+  - 1-click anonymization toggle that masks patient names, birthdates, and direct identifiers according to the HIPAA Safe Harbor standard (`164.514(b)(2)`).
+- **Cryptographic Immutable Audit Trail**:
+  - Chronological logging of all PHI access events, triage evaluations, clinician overrides, and electronic communications.
+  - Captures actor identity, clinical role, action code, timestamp, masked IP address, and SHA-256 integrity signatures.
+
+---
+
+### 6. Encrypted Patient-Clinician Messaging Portal
+
+Direct, secure communication channel connecting triage patients with attending clinical staff:
+
+- **End-to-End Encrypted Messaging**: Real-time communication between registered patients and emergency department staff.
+- **Urgent Priority Flagging**: High-priority alert flags for sudden clinical deterioration or symptom escalation.
+- **Clinical Macro Shortcuts**: Pre-configured emergency macro templates for attending physicians (e.g., *"Remain seated with EMS en route"*, *"Avoid oral intake pending labs"*).
+- **Case File Context**: Automatic message linking to the patient's active triage record ID.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+|---|---|
+| **Frontend Framework** | React 18, TypeScript, Vite |
+| **Styling & Design System** | Tailwind CSS, Lucide React Icons |
+| **Clinical Reasoning AI** | Google Gemini 2.5 Flash Multimodal Vision & Language API (`@google/genai`) |
+| **Backend & API Server** | Express.js, Node.js (Port 3000), RESTful API Architecture |
+| **Healthcare Standards** | Emergency Severity Index (ESI v4), HL7 FHIR R4, LOINC, HIPAA Security Rule |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js**: Version 18.0 or higher
+- **npm** or **bun**: Package manager
+- **Gemini API Key**: Set in environment variables (`GEMINI_API_KEY`)
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-org/aegis-triage.git
+   cd aegis-triage
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   Add your Gemini API key:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+4. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   Open your browser to `http://localhost:3000`.
+
+5. **Build for production:**
+   ```bash
+   npm run build
+   npm start
+   ```
+
+---
+
+## 🔌 API Reference
+
+### Triage & Clinical Decision Support
+- `POST /api/triage`
+  - **Description**: Executes multimodal AI triage analysis on submitted symptoms, vitals, images, and audio dictation.
+  - **Payload**: `patientId`, `chiefComplaint`, `duration`, `painScore`, `vitals`, `imageData`, `audioData`, `language`.
+  - **Response**: `caseItem` object and structured `analysis` with ESI level, red flags, differentials, and recommendations.
+
+- `GET /api/cases`
+  - **Description**: Retrieves all active emergency department triage cases for clinician queue management.
+
+- `PATCH /api/cases/:id/disposition`
+  - **Description**: Clinician sign-off endpoint for submitting ESI overrides, clinical disposition orders, and digital physician signatures.
+
+### Healthcare Interoperability & Compliance
+- `GET /api/fhir/patient/:id`
+  - **Description**: Generates an HL7 FHIR R4 JSON bundle for the specified patient and triage encounter.
+
+- `POST /api/fhir/bundle`
+  - **Description**: Ingests external FHIR R4 bundles from Epic, Cerner, or Allscripts.
+
+- `GET /api/hipaa/audit-logs`
+  - **Description**: Fetches the immutable HIPAA compliance audit trail.
+
+### Emergency Response & Messaging
+- `POST /api/emergency/dispatch`
+  - **Description**: Triggers priority 911 EMS ambulance dispatch and begins live telemetry tracking.
+
+- `GET /api/messages` & `POST /api/messages`
+  - **Description**: Secure messaging endpoints for patient-to-clinician communications.
+
+---
+
+## ⚠️ Clinical Safety Disclaimer
+
+> **IMPORTANT MEDICAL NOTICE**: MySwaasth is a Clinical Decision Support System (CDSS) designed for medical triage assistance, triage training, and clinical demonstration purposes. It does not replace the professional diagnostic evaluation, clinical judgment, or treatment recommendations of a board-certified physician or emergency medical professional. **In the event of a real medical emergency, immediately call 102 / 108 / 112 (or your local emergency services number) or proceed to the nearest emergency casualty department.**
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

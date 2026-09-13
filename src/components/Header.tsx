@@ -7,14 +7,23 @@ import {
   Stethoscope, 
   Globe, 
   RefreshCw,
-  Lock
+  Lock,
+  Ambulance,
+  Building2,
+  CreditCard,
+  MessageSquare,
+  FileText
 } from 'lucide-react';
 import { SupportedLanguage } from '../types';
 import { translations } from '../translations';
 
+export type AppPageId = 'home' | 'triage' | 'ambulance' | 'hospitals' | 'abha' | 'clinician' | 'messages' | 'history';
+
 interface HeaderProps {
   currentRole: 'patient' | 'clinician';
   onRoleChange: (role: 'patient' | 'clinician') => void;
+  activePage: AppPageId;
+  onPageChange: (page: AppPageId) => void;
   language: SupportedLanguage;
   onLanguageChange: (lang: SupportedLanguage) => void;
   onOpenPrivacy: () => void;
@@ -26,6 +35,8 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentRole,
   onRoleChange,
+  activePage,
+  onPageChange,
   language,
   onLanguageChange,
   onOpenPrivacy,
@@ -33,121 +44,237 @@ export const Header: React.FC<HeaderProps> = ({
   isSyncing,
   activeCaseCount = 0
 }) => {
+  const isHindi = language === 'hi';
   const t = translations[language] || translations.en;
+
+  const handleNavClick = (page: AppPageId) => {
+    onPageChange(page);
+    if (page === 'clinician') {
+      onRoleChange('clinician');
+    } else {
+      onRoleChange('patient');
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-18 gap-2">
+      
+      {/* Top Tri-Color Micro Accent Bar */}
+      <div className="h-1 flex w-full">
+        <div className="flex-1 bg-amber-500" />
+        <div className="flex-1 bg-slate-100" />
+        <div className="flex-1 bg-emerald-500" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        
+        {/* Top Tier: Logo, Helpline & Controls */}
+        <div className="flex items-center justify-between h-16 gap-2">
           
           {/* Brand & Identity */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-cyan-600 flex items-center justify-center text-white shadow-sm shadow-teal-500/20">
-              <Activity className="w-6 h-6 stroke-[2.2]" />
+          <div 
+            onClick={() => handleNavClick('home')}
+            className="flex items-center gap-2.5 cursor-pointer select-none"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 via-teal-700 to-slate-900 flex items-center justify-center text-white shadow-md shadow-teal-700/20 shrink-0">
+              <Activity className="w-6 h-6 stroke-[2.4]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900">
-                  Aegis<span className="text-teal-600">Triage</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-lg sm:text-xl tracking-tight text-slate-900">
+                  My<span className="text-teal-600">Swaasth</span>
                 </span>
-                <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
-                  <ShieldCheck className="w-3 h-3 text-teal-600" />
-                  HIPAA Secured
+                <span className="hidden sm:inline-flex text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded">
+                  India 102
                 </span>
               </div>
-              <p className="hidden sm:block text-xs text-slate-500 font-medium">
-                Clinical AI Multimodal Emergency Severity Triage
+              <p className="hidden md:block text-[11px] text-slate-500 font-medium -mt-0.5">
+                {isHindi ? 'राष्ट्रीय आपातकालीन स्वास्थ्य एवं 102 एम्बुलेंस' : 'AI Medical Triage & 102 National Care'}
               </p>
             </div>
           </div>
 
-          {/* Center Actions: Role Switcher */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold">
+          {/* Center Navigation Tabs (Minimalist & Aesthetic) */}
+          <nav className="hidden md:flex items-center bg-slate-100/90 p-1 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600">
             <button
-              id="role-patient-btn"
-              onClick={() => onRoleChange('patient')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                currentRole === 'patient'
-                  ? 'bg-white text-teal-800 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
+              type="button"
+              onClick={() => handleNavClick('home')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                activePage === 'home'
+                  ? 'bg-white text-teal-700 shadow-xs'
+                  : 'hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
-              <UserCheck className="w-4 h-4 text-teal-600" />
-              <span>{t.patientMode}</span>
+              <span>🏠</span>
+              <span>{isHindi ? 'होम' : 'Home'}</span>
             </button>
+
             <button
-              id="role-clinician-btn"
-              onClick={() => onRoleChange('clinician')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all relative ${
-                currentRole === 'clinician'
-                  ? 'bg-slate-900 text-white shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
+              type="button"
+              onClick={() => handleNavClick('triage')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                activePage === 'triage'
+                  ? 'bg-white text-slate-950 shadow-xs'
+                  : 'hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
-              <Stethoscope className="w-4 h-4 text-cyan-400" />
-              <span>{t.clinicianMode}</span>
+              <span>🚨</span>
+              <span>{isHindi ? 'ट्राइएज' : 'Quick Triage'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleNavClick('ambulance')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                activePage === 'ambulance'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'hover:text-rose-700 hover:bg-slate-200/50'
+              }`}
+            >
+              <Ambulance className="w-3.5 h-3.5" />
+              <span>{isHindi ? '102 एम्बुलेंस' : '102 Ambulance'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleNavClick('hospitals')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                activePage === 'hospitals'
+                  ? 'bg-white text-teal-700 shadow-xs'
+                  : 'hover:text-slate-900 hover:bg-slate-200/50'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5 text-teal-600" />
+              <span>{isHindi ? 'अस्पताल' : 'Casualty ER'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleNavClick('abha')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                activePage === 'abha'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'hover:text-slate-900 hover:bg-slate-200/50'
+              }`}
+            >
+              <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+              <span>{isHindi ? 'ABHA कार्ड' : 'ABHA ID'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleNavClick('clinician')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer relative ${
+                activePage === 'clinician'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'hover:text-slate-900 hover:bg-slate-200/50'
+              }`}
+            >
+              <Stethoscope className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{isHindi ? 'डॉक्टर स्टेशन' : 'Clinician'}</span>
               {activeCaseCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-extrabold animate-pulse">
-                  {activeCaseCount}
-                </span>
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
               )}
             </button>
-          </div>
+          </nav>
 
-          {/* Right Controls: Sync, Language, Privacy, Emergency */}
+          {/* Right Controls: 1-Click Hindi Toggle, 102 Helpline Button */}
           <div className="flex items-center gap-2">
-            {/* Real-time Sync Indicator */}
-            <div 
-              className="hidden lg:flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg"
-              title="Real-time device synchronization active"
+            
+            {/* Direct Hindi / English Toggle for rapid switching */}
+            <button
+              type="button"
+              onClick={() => onLanguageChange(isHindi ? 'en' : 'hi')}
+              className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors cursor-pointer flex items-center gap-1"
+              title="Toggle English / हिन्दी"
             >
-              <span className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'}`} />
-              <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${isSyncing ? 'animate-spin text-teal-600' : ''}`} />
-              <span className="font-medium text-[11px]">Sync Active</span>
-            </div>
+              <Globe className="w-3.5 h-3.5 text-slate-500" />
+              <span>{isHindi ? 'English' : 'हिन्दी'}</span>
+            </button>
 
-            {/* Language Switcher */}
-            <div className="relative flex items-center">
-              <Globe className="w-4 h-4 text-slate-400 absolute left-2.5 pointer-events-none" />
-              <select
-                id="language-select"
-                value={language}
-                onChange={(e) => onLanguageChange(e.target.value as SupportedLanguage)}
-                className="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                aria-label="Select Application Language"
-              >
-                <option value="en">English (US)</option>
-                <option value="es">Español</option>
-                <option value="zh">中文 (简体)</option>
-                <option value="fr">Français</option>
-                <option value="ar">العربية</option>
-                <option value="hi">हिन्दी</option>
-              </select>
-            </div>
-
-            {/* HIPAA Compliance & Security Shield */}
+            {/* HIPAA / ABDM Security Vault */}
             <button
               id="hipaa-privacy-btn"
               onClick={onOpenPrivacy}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-teal-700 bg-slate-50 hover:bg-teal-50 border border-slate-200 rounded-lg transition-colors"
-              title="View HIPAA safeguards, audit trails & PHI settings"
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:text-teal-700 bg-slate-50 hover:bg-teal-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
+              title="ABDM & HIPAA Protected"
             >
               <Lock className="w-3.5 h-3.5 text-teal-600" />
-              <span>HIPAA Vault</span>
+              <span className="hidden lg:inline">ABDM</span>
             </button>
 
-            {/* 911 Emergency Alert Trigger */}
+            {/* 102 Emergency Ambulance Trigger (Indian National Helpline) */}
             <button
               id="emergency-alert-btn"
               onClick={onOpenEmergency}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm shadow-rose-600/30 transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 active:scale-95 text-white text-xs sm:text-sm font-black rounded-xl shadow-md shadow-rose-600/30 transition-all cursor-pointer"
             >
               <PhoneCall className="w-4 h-4 animate-bounce" />
-              <span className="tracking-wide">911 Alert</span>
+              <span className="tracking-wide">{isHindi ? '102 एम्बुलेंस' : '102 Helpline'}</span>
             </button>
+
           </div>
 
         </div>
+
+        {/* Mobile Horizontal Navigation Bar */}
+        <div className="md:hidden flex items-center justify-between overflow-x-auto py-2 border-t border-slate-100 text-xs font-bold text-slate-600 gap-1 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => handleNavClick('home')}
+            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+              activePage === 'home' ? 'bg-teal-700 text-white' : 'hover:bg-slate-100'
+            }`}
+          >
+            🏠 {isHindi ? 'होम' : 'Home'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNavClick('triage')}
+            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+              activePage === 'triage' ? 'bg-slate-900 text-white' : 'hover:bg-slate-100'
+            }`}
+          >
+            🚨 {isHindi ? 'ट्राइएज' : 'Triage'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNavClick('ambulance')}
+            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+              activePage === 'ambulance' ? 'bg-rose-600 text-white' : 'hover:bg-slate-100 text-rose-600'
+            }`}
+          >
+            🚑 102 {isHindi ? 'एम्बुलेंस' : 'Ambulance'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNavClick('hospitals')}
+            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+              activePage === 'hospitals' ? 'bg-teal-700 text-white' : 'hover:bg-slate-100'
+            }`}
+          >
+            🏥 {isHindi ? 'अस्पताल' : 'Casualty'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNavClick('abha')}
+            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+              activePage === 'abha' ? 'bg-amber-600 text-white' : 'hover:bg-slate-100'
+            }`}
+          >
+            🪪 ABHA
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNavClick('clinician')}
+            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+              activePage === 'clinician' ? 'bg-slate-900 text-white' : 'hover:bg-slate-100'
+            }`}
+          >
+            🩺 {isHindi ? 'डॉक्टर' : 'Doctor'}
+          </button>
+        </div>
+
       </div>
     </header>
   );

@@ -323,6 +323,16 @@ export const ClinicianDashboard: React.FC<ClinicianDashboardProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    id="clinician-dispatch-102-btn"
+                    onClick={onOpenEmergency}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+                  >
+                    <AlertOctagon className="w-3.5 h-3.5" />
+                    <span>Dispatch 102</span>
+                  </button>
+
+                  <button
+                    type="button"
                     id="clinician-msg-btn"
                     onClick={() => onOpenMessaging(activeCase.id)}
                     className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg border border-slate-300 transition-colors cursor-pointer"

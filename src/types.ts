@@ -35,6 +35,9 @@ export interface Medication {
 export interface PatientProfile {
   id: string;
   mrn: string; // Medical Record Number
+  abhaId?: string; // 14-digit Ayushman Bharat Health Account ID
+  abhaAddress?: string; // @abdm handle
+  pmjayCovered?: boolean;
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -53,6 +56,22 @@ export interface PatientProfile {
     phone: string;
   };
   preferredLanguage: string;
+}
+
+export interface IndianHospital {
+  id: string;
+  name: string;
+  type: 'Government Apex' | 'Government District' | 'Private Super Speciality';
+  city: string;
+  distanceKm: number;
+  travelTimeMins: number;
+  address: string;
+  emergencyPhone: string;
+  casualtyAvailable: boolean;
+  icuBedsAvailable: number;
+  hasCathLab: boolean;
+  hasTraumaLevel1: boolean;
+  pmjayCashless: boolean;
 }
 
 export interface MediaAttachment {
@@ -97,6 +116,8 @@ export interface TriageAnalysisResult {
   preArrivalInstructions: string[];
   warningSignsToEscalate: string[];
   patientExplanation: string;
+  immediateAction?: string;
+  engineType?: 'rules_engine' | 'ai_model' | 'hybrid';
   suggestedQuestionsForClinician: string[];
   fhirBundle?: Record<string, unknown>;
 }

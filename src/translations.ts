@@ -8,6 +8,7 @@ export interface TranslationDictionary {
   hipaaBadge: string;
   realtimeSync: string;
   emergency911: string;
+  emergency102: string;
   newTriage: string;
   myHistory: string;
   secureMessages: string;
@@ -37,13 +38,14 @@ export interface TranslationDictionary {
 
 export const translations: Record<SupportedLanguage, TranslationDictionary> = {
   en: {
-    appName: 'AegisTriage AI',
+    appName: 'MySwaasth AI',
     tagline: 'Clinical Multimodal Emergency Severity Triage System',
     patientMode: 'Patient Portal',
     clinicianMode: 'Clinician Command',
     hipaaBadge: 'HIPAA Compliant & PHI Encrypted',
     realtimeSync: 'Real-Time Sync Active',
-    emergency911: 'Emergency Alert (911)',
+    emergency911: 'Emergency Alert (102)',
+    emergency102: 'Emergency Ambulance (102)',
     newTriage: 'Symptom Triage Intake',
     myHistory: 'Medical History & Past Visits',
     secureMessages: 'Secure Clinical Messaging',
@@ -71,13 +73,14 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     phiProtected: 'All PHI is de-identified and encrypted adhering to HIPAA standards.'
   },
   es: {
-    appName: 'AegisTriage IA',
+    appName: 'MySwaasth IA',
     tagline: 'Sistema Clínico Multimodal de Triaje de Severidad',
     patientMode: 'Portal del Paciente',
     clinicianMode: 'Comando Clínico',
     hipaaBadge: 'Cumple con HIPAA y PHI Cifrado',
     realtimeSync: 'Sincronización en Tiempo Real',
-    emergency911: 'Alerta de Emergencia (911)',
+    emergency911: 'Alerta de Emergencia (102)',
+    emergency102: 'Ambulancia de Emergencia (102)',
     newTriage: 'Ingreso de Triaje de Síntomas',
     myHistory: 'Historial Médico y Consultas',
     secureMessages: 'Mensajería Clínica Segura',
@@ -105,13 +108,14 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     phiProtected: 'Toda la información médica está cifrada y protegida por HIPAA.'
   },
   zh: {
-    appName: 'AegisTriage 智能分诊',
+    appName: 'MySwaasth 智能医疗分诊',
     tagline: '多模态多维度临床急诊分级系统',
     patientMode: '患者端',
     clinicianMode: '医生工作站',
     hipaaBadge: '符合 HIPAA 隐私与加密标准',
     realtimeSync: '实时多端同步已激活',
-    emergency911: '紧急求救警报 (120/911)',
+    emergency911: '紧急救援警报 (102)',
+    emergency102: '国家救护车紧急呼叫 (102)',
     newTriage: '智能症状分诊评估',
     myHistory: '既往病史与就诊记录',
     secureMessages: '端到端加密医患交流',
@@ -135,17 +139,18 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     voiceInputTitle: '语音录音描述病情',
     photoInputTitle: '病灶照片与检查图像上传',
     documentUploadTitle: '化验单及既往病历上传',
-    callEmergencyNow: '立即拨打紧急救援电话',
+    callEmergencyNow: '立即拨打紧急救援电话 (102)',
     phiProtected: '患者所有健康信息均受合规加密与去标识化保护。'
   },
   fr: {
-    appName: 'AegisTriage IA',
+    appName: 'MySwaasth IA',
     tagline: 'Système Clinique Multimodal de Triage Médical d’Urgence',
     patientMode: 'Portail Patient',
     clinicianMode: 'Poste Clinique',
     hipaaBadge: 'Conforme HIPAA & Données Chiffrées',
     realtimeSync: 'Synchronisation en Temps Réel',
-    emergency911: 'Alerte Urgence (15 / 911)',
+    emergency911: 'Alerte Urgence (102)',
+    emergency102: 'Ambulance d’Urgence (102)',
     newTriage: 'Évaluation des Symptômes',
     myHistory: 'Historique Médical & Visites',
     secureMessages: 'Messagerie Sécurisée',
@@ -169,17 +174,18 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     voiceInputTitle: 'Enregistrement Vocal des Symptômes',
     photoInputTitle: 'Télécharger Photo / Lésion',
     documentUploadTitle: 'Bilans Biologiques / Documents',
-    callEmergencyNow: 'Appeler les Secours Immédiatement',
+    callEmergencyNow: 'Appeler les Secours Immédiatement (102)',
     phiProtected: 'Données de santé protégées et anonymisées conformément à HIPAA.'
   },
   ar: {
-    appName: 'AegisTriage الذكي',
+    appName: 'MySwaasth الذكي',
     tagline: 'نظام الفرز الطبي السريري الذكي متعدد الوسائط',
     patientMode: 'بوابة المريض',
     clinicianMode: 'محطة الطبيب',
     hipaaBadge: 'متوافق مع معايير HIPAA وتشفير البيانات',
     realtimeSync: 'المزامنة الفورية نشطة',
-    emergency911: 'تنبيه الطوارئ الفوري',
+    emergency911: 'تنبيه الطوارئ الفوري (102)',
+    emergency102: 'إسعاف الطوارئ الوطني (102)',
     newTriage: 'بدء فرز الأعراض',
     myHistory: 'السجل الطبي والزيارات السابقة',
     secureMessages: 'المراسلة الآمنة المشفرة',
@@ -203,17 +209,18 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     voiceInputTitle: 'تسجيل صوتي لوصف الأعراض',
     photoInputTitle: 'رفع صورة العرض أو الجرح',
     documentUploadTitle: 'رفع نتائج التحاليل والتقارير',
-    callEmergencyNow: 'الاتصال بالطوارئ فوراً',
+    callEmergencyNow: 'الاتصال بالطوارئ فوراً (102)',
     phiProtected: 'جميع البيانات الصحية مشفرة ومحمية وفق معايير الخصوصية الطبية.'
   },
   hi: {
-    appName: 'AegisTriage एआई',
+    appName: 'MySwaasth (माय स्वास्थ्य)',
     tagline: 'मल्टीमॉडल एआई क्लिनिकल इमरजेंसी ट्राइएज सिस्टम',
     patientMode: 'रोगी पोर्टल',
     clinicianMode: 'डॉक्टर कमांड सेंटर',
     hipaaBadge: 'HIPAA अनुपालन और एन्क्रिप्टेड डेटा',
     realtimeSync: 'रियल-टाइम डिवाइस सिंक सक्रिय',
-    emergency911: 'आपातकालीन अलर्ट (112/911)',
+    emergency911: 'आपातकालीन अलर्ट (102)',
+    emergency102: 'राष्ट्रीय एम्बुलेंस (102)',
     newTriage: 'लक्षण ट्राइएज जांच',
     myHistory: 'चिकित्सा इतिहास व पिछली जांचें',
     secureMessages: 'सुरक्षित क्लिनिकल मैसेजिंग',
@@ -237,7 +244,7 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     voiceInputTitle: 'लक्षणों की आवाज रिकॉर्डिंग',
     photoInputTitle: 'घाव या लक्षण की फोटो अपलोड करें',
     documentUploadTitle: 'लैब रिपोर्ट व मेडिकल रिकॉर्ड अपलोड करें',
-    callEmergencyNow: 'तुरंत आपातकालीन सेवा को कॉल करें',
+    callEmergencyNow: 'तुरंत 102 एम्बुलेंस सेवा को कॉल करें',
     phiProtected: 'सभी स्वास्थ्य रिकॉर्ड उच्च एन्क्रिप्शन और गोपनीयता मानकों के तहत सुरक्षित हैं।'
   }
 };

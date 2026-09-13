@@ -1,6 +1,6 @@
 {
-  "name": "AegisTriage - AI Medical Triage System",
-  "description": "HIPAA-compliant multimodal AI medical triage platform featuring symptom analysis, EHR integration, clinician command center, secure messaging, and emergency dispatch alerts.",
+  "name": "MySwaasth - AI Medical Triage & Emergency Healthcare",
+  "description": "Minimalist multimodal AI medical triage and emergency dispatch system tailored for India, featuring 1-tap emergency intake, 102 National Ambulance tracking, ABDM / ABHA health locker, and casualty locator.",
   "requestFramePermissions": ["camera", "microphone", "geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

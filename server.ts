@@ -126,7 +126,36 @@ async function startServer() {
           patientProfile,
           language
         });
-        return res.json(fallbackResult);
+        const caseId = `TRG-${Math.floor(100 + Math.random() * 900)}`;
+        const caseItem = {
+          id: caseId,
+          timestamp: new Date().toISOString(),
+          patient: patientProfile || { firstName: 'Anonymous', lastName: 'Patient' },
+          chiefComplaint: chiefComplaint || 'Clinical emergency assessment',
+          detailedSymptoms: detailedSymptoms || '',
+          onset: 'Acute onset',
+          duration: 'Recent onset',
+          painScale: vitals?.painScore || 5,
+          vitals: vitals || {},
+          attachments: [],
+          labResults: [],
+          analysis: fallbackResult,
+          status: fallbackResult.esiLevel <= 2 ? 'emergency_escalated' : 'ai_evaluated',
+          messages: [],
+          language
+        };
+
+        activeCases.set(caseId, {
+          id: caseId,
+          data: caseItem,
+          updatedAt: new Date().toISOString()
+        });
+
+        return res.json({
+          analysis: fallbackResult,
+          caseItem,
+          ...fallbackResult
+        });
       }
 
       const promptParts: any[] = [];
@@ -244,20 +273,78 @@ Output MUST BE strict, valid JSON matching this exact structure without markdown
 
       const responseText = response.text || '{}';
       const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsedResult = JSON.parse(cleanJson);
+      const parsedAnalysis = JSON.parse(cleanJson);
 
-      res.json(parsedResult);
+      const caseId = `TRG-${Math.floor(100 + Math.random() * 900)}`;
+      const caseItem = {
+        id: caseId,
+        timestamp: new Date().toISOString(),
+        patient: patientProfile || { firstName: 'Anonymous', lastName: 'Patient' },
+        chiefComplaint: chiefComplaint || 'Clinical emergency assessment',
+        detailedSymptoms: detailedSymptoms || '',
+        onset: 'Acute onset',
+        duration: 'Recent onset',
+        painScale: vitals?.painScore || 5,
+        vitals: vitals || {},
+        attachments: [],
+        labResults: [],
+        analysis: parsedAnalysis,
+        status: parsedAnalysis.esiLevel <= 2 ? 'emergency_escalated' : 'ai_evaluated',
+        messages: [],
+        language
+      };
+
+      activeCases.set(caseId, {
+        id: caseId,
+        data: caseItem,
+        updatedAt: new Date().toISOString()
+      });
+
+      res.json({
+        analysis: parsedAnalysis,
+        caseItem,
+        ...parsedAnalysis
+      });
     } catch (err: any) {
       console.error('Error in /api/triage/analyze:', err);
       // Fallback on error to ensure uninterrupted patient safety
-      const fallback = generateClinicalFallbackTriage({
+      const fallbackAnalysis = generateClinicalFallbackTriage({
         chiefComplaint: req.body.chiefComplaint,
         detailedSymptoms: req.body.detailedSymptoms,
         vitals: req.body.vitals,
         patientProfile: req.body.patientProfile,
         language: req.body.language || 'en'
       });
-      res.json(fallback);
+      const caseId = `TRG-${Math.floor(100 + Math.random() * 900)}`;
+      const caseItem = {
+        id: caseId,
+        timestamp: new Date().toISOString(),
+        patient: req.body.patientProfile || { firstName: 'Anonymous', lastName: 'Patient' },
+        chiefComplaint: req.body.chiefComplaint || 'Clinical emergency assessment',
+        detailedSymptoms: req.body.detailedSymptoms || '',
+        onset: 'Acute onset',
+        duration: 'Recent onset',
+        painScale: req.body.vitals?.painScore || 5,
+        vitals: req.body.vitals || {},
+        attachments: [],
+        labResults: [],
+        analysis: fallbackAnalysis,
+        status: fallbackAnalysis.esiLevel <= 2 ? 'emergency_escalated' : 'ai_evaluated',
+        messages: [],
+        language: req.body.language || 'en'
+      };
+
+      activeCases.set(caseId, {
+        id: caseId,
+        data: caseItem,
+        updatedAt: new Date().toISOString()
+      });
+
+      res.json({
+        analysis: fallbackAnalysis,
+        caseItem,
+        ...fallbackAnalysis
+      });
     }
   });
 
@@ -436,6 +523,161 @@ Return JSON format:
     }
   });
 
+  // --- API: Doctor Conversational Clinical Triage Chatbot ---
+  app.post('/api/doctor-chat', async (req, res) => {
+    try {
+      const {
+        message = '',
+        conversationHistory = [],
+        patientProfile,
+        currentResult,
+        photoBase64,
+        photoMimeType,
+        audioBase64,
+        audioMimeType,
+        language = 'en'
+      } = req.body;
+
+      const ai = getGeminiClient();
+
+      if (!ai) {
+        // High-quality empathetic doctor response fallback
+        const isHindi = language === 'hi';
+        const msgLower = (message || '').toLowerCase();
+        let fallbackReply = isHindi
+          ? "नमस्ते, मैं आपका ऑन-ड्यूटी आपातकालीन डॉक्टर हूँ। मैंने आपके लक्षणों की समीक्षा कर ली है। कृपया शांत रहें, सीधे बैठें और किसी भी प्रकार की शारीरिक मेहनत से बचें। अगर दर्द बढ़ रहा है, तो 102 एम्बुलेंस तुरंत कॉल करें या वीडियो कॉल द्वारा हमारे डॉक्टर से जुड़ें।"
+          : "Hello, I am your on-duty emergency triage physician. I've reviewed your reported symptoms. Please remain calm, sit comfortably upright, and do not exert yourself. If you are experiencing escalating chest pressure or shortness of breath, we recommend immediate 102 ambulance dispatch or launching a HIPAA-compliant video consult with our on-call casualty clinician right away.";
+
+        let suggestedMeds = isHindi
+          ? ["डिस्प्रिन (Disprin 300mg) - केवल डॉक्टर या आपातकालीन सलाह पर चबाएं", "ओआरएस (ORS घोल) - निर्जलीकरण या कमजोरी में"]
+          : ["Aspirin/Disprin 300mg (chewable) if acute chest discomfort suspected and no allergy/bleeding", "ORS electrolyte hydration solution"];
+
+        let speechScript = isHindi
+          ? "नमस्ते। कृपया घबराएं नहीं। आराम से बैठें। दवाइयों और नजदीकी अस्पताल के लिए नीचे दिए गए बटन से सीधे वीडियो कॉल शुरू करें।"
+          : "Hello, this is your clinical triage doctor. Please rest comfortably and stay calm. Review the prescribed instructions below, and start a direct video call if you need immediate doctor evaluation.";
+
+        if (msgLower.includes('chest') || msgLower.includes('heart') || msgLower.includes('दर्द')) {
+          fallbackReply = isHindi
+            ? "सीने में दर्द या भारीपन एक गंभीर आपातकाल हो सकता है। यदि दर्द बाएं हाथ या जबड़े में फैल रहा है, तो कृपया तुरंत डिस्प्रिन (Disprin 300mg) चबाएं और 102 एम्बुलेंस पर संपर्क करें। किसी भी स्थिति में खुद वाहन न चलाएं।"
+            : "Acute chest discomfort or pressure requires immediate vigilance. If you have radiation to the arm, jaw, or shortness of breath, please chew a 300mg Aspirin/Disprin immediately (if not allergic) and do not walk or drive. We can also connect you to our emergency trauma clinician via secure video call right now.";
+          speechScript = isHindi
+            ? "सावधान रहें। सीने का दर्द गंभीर हो सकता है। तुरंत डिस्प्रिन चबाएं, सीधे बैठें और 102 एम्बुलेंस को कॉल करें।"
+            : "Immediate alert: For acute chest discomfort, rest completely upright, chew Disprin 300mg if advised, and connect to 102 ambulance or our video doctor.";
+        }
+
+        return res.json({
+          reply: fallbackReply,
+          speechScript,
+          recommendedCare: isHindi ? "आपातकालीन ट्रौमा वार्ड अथवा नजदीकी ईआर में तत्काल जांच" : "Emergency Trauma / Casualty Department Evaluation",
+          suggestedMedications: suggestedMeds,
+          immediateCareInstructions: isHindi
+            ? ["आरामदायक स्थिति में बैठें", "तंग कपड़े ढीले करें", "पानी या भारी भोजन तुरंत न लें"]
+            : ["Rest completely in high Fowler's upright position", "Loosen restrictive clothing", "Keep emergency contacts and national ID handy"],
+          suggestedFollowupQuestions: isHindi
+            ? ["क्या आपको पसीना या चक्कर आ रहा है?", "यह दर्द कितने समय से है?", "क्या आप बीपी या शुगर की दवा लेते हैं?"]
+            : ["Does the pain radiate to your left arm, jaw, or back?", "Are you experiencing profuse cold sweating or nausea?", "What time did these symptoms first begin?"]
+        });
+      }
+
+      // Build structured multimodal prompt for Gemini
+      const promptParts: any[] = [];
+
+      const systemPrompt = `You are Dr. Anya Sen, MD, a compassionate, authoritative Senior Emergency Triage Physician at MySwaasth (India National Emergency Healthcare Network).
+You speak directly, warmly, and clearly with the patient or their family, just like an experienced ER doctor at their bedside.
+Your goal is to:
+1. Empathize and give clear, reassuring, and immediate clinical judgment based on their symptoms, reported vitals, uploaded wound/rash photos, or audio recordings.
+2. Outline specific, evidence-based emergency first-aid or OTC supportive measures/prescriptions (e.g. Aspirin 300mg chewable for acute chest pain without contraindications; ORS for dehydration; Salbutamol inhaler for bronchospasm; Paracetamol 500-650mg for high fever). Always note clear clinical cautions.
+3. Advise on recommended care setting (Emergency Casualty / Urgent Care / OPD) and timeline.
+4. Provide a natural "speechScript" (2-3 spoken sentences) that will be read aloud by the app's speech synthesizer to provide comforting, clear audible instructions on medicines, care, and what to do.
+5. Offer 3 targeted clinical follow-up questions to clarify severity.
+
+Language requirement: Reply in ${language === 'hi' ? 'Hindi (natural, empathetic, clear)' : 'English (warm, medical, professional)'}.
+
+Format your response as strict JSON:
+{
+  "reply": "Warm doctor response explaining their symptoms, what they mean, immediate steps, and clinical reasoning.",
+  "speechScript": "Short 2-4 sentence script specifically written for text-to-speech: mentions medicines, immediate care, and reassurance clearly.",
+  "recommendedCare": "e.g., Immediate 24/7 Casualty & Trauma Center (< 30 mins) or Urgent Care Clinic",
+  "suggestedMedications": ["Medicine Name (Dosage/Usage)", "..."],
+  "immediateCareInstructions": ["Step 1...", "Step 2...", "Step 3..."],
+  "suggestedFollowupQuestions": ["Question 1...", "Question 2...", "Question 3..."]
+}`;
+
+      promptParts.push({ text: systemPrompt });
+
+      // Append patient context
+      promptParts.push({
+        text: `PATIENT PROFILE:
+Name: ${patientProfile?.firstName || 'Patient'} ${patientProfile?.lastName || ''}, Age: ${patientProfile?.age || 'Adult'}, Sex: ${patientProfile?.sex || 'Unknown'}
+Allergies: ${JSON.stringify(patientProfile?.allergies || ['None'])}
+Chronic Conditions: ${JSON.stringify(patientProfile?.chronicConditions || ['None'])}
+Current Medications: ${JSON.stringify(patientProfile?.medications || ['None'])}
+Existing Triage ESI: ${currentResult ? `ESI Level ${currentResult.esiLevel} - ${currentResult.acuityTitle}` : 'Pending Intake'}
+`
+      });
+
+      // Append conversation history
+      if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+        const historyText = conversationHistory
+          .slice(-6)
+          .map((c: any) => `${c.sender === 'doctor' ? 'Dr. Anya' : 'Patient'}: ${c.text}`)
+          .join('\n');
+        promptParts.push({ text: `PREVIOUS DOCTOR-PATIENT EXCHANGE:\n${historyText}` });
+      }
+
+      // Append latest message
+      promptParts.push({ text: `LATEST PATIENT INPUT:\n"${message || 'Patient has initiated clinical consultation with multimodal input.'}"` });
+
+      // Append visual input if provided
+      if (photoBase64 && photoMimeType) {
+        const cleanBase64 = photoBase64.replace(/^data:[^;]+;base64,/, '');
+        promptParts.push({
+          inlineData: {
+            mimeType: photoMimeType,
+            data: cleanBase64
+          }
+        });
+        promptParts.push({ text: 'Patient has attached a visual photo (e.g. wound, rash, swelling, or ECG) for your direct examination.' });
+      }
+
+      // Append audio if provided
+      if (audioBase64 && audioMimeType) {
+        const cleanAudio = audioBase64.replace(/^data:[^;]+;base64,/, '');
+        promptParts.push({
+          inlineData: {
+            mimeType: audioMimeType,
+            data: cleanAudio
+          }
+        });
+        promptParts.push({ text: 'Patient has recorded voice symptoms for speech and acoustic respiratory assessment.' });
+      }
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: { parts: promptParts },
+        config: {
+          temperature: 0.3,
+          responseMimeType: 'application/json'
+        }
+      });
+
+      const responseText = response.text || '{}';
+      const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleanJson);
+      res.json(parsed);
+    } catch (err: any) {
+      console.error('Error in /api/doctor-chat:', err);
+      res.status(500).json({
+        reply: "I am having a momentary network sync issue, but your health remains our immediate priority. If you have severe symptoms, please dial 102 or use our direct emergency video consultation portal.",
+        speechScript: "Please rest in an upright position. For any severe symptoms, please dial 102 or start an emergency video call.",
+        recommendedCare: "Emergency Medical Center (24/7)",
+        suggestedMedications: ["Aspirin/Disprin 300mg chewable (if acute chest pain)", "Oral Rehydration Salts (ORS)"],
+        immediateCareInstructions: ["Rest quietly", "Avoid physical exertion", "Keep emergency contact numbers handy"],
+        suggestedFollowupQuestions: ["How long have these symptoms persisted?", "Are you allergic to any medications?", "Is anyone with you currently?"]
+      });
+    }
+  });
+
   // --- API: Cases (Real-time sync across connected devices) ---
   app.get('/api/cases', (req, res) => {
     const list = Array.from(activeCases.values()).map(c => c.data);
@@ -551,23 +793,25 @@ Return JSON format:
     const { caseId, patientName, chiefComplaint, coordinates, address } = req.body;
 
     const dispatchInfo = {
-      id: `EMS-${Date.now().toString().slice(-6)}`,
+      id: `EMS-102-${Date.now().toString().slice(-6)}`,
       caseId,
       patientName: patientName || 'Unidentified Patient',
       timestamp: new Date().toISOString(),
       status: 'Dispatched',
-      ambulanceUnit: 'Medic Unit 9 (Paramedic Advanced Life Support)',
-      nearestHospital: 'Metro Health Academic Emergency Medical Center',
-      etaMinutes: 6,
-      coordinates: coordinates || { lat: 37.7749, lng: -122.4194 },
-      locationAddress: address || 'Current User Geolocation Verified',
+      ambulanceUnit: '102 National Ambulance Service (ALS Unit DL-01-EA-4021)',
+      nearestHospital: 'AIIMS - JPN Apex Trauma Centre (Ring Road, New Delhi)',
+      driverName: 'Rajesh Kumar Sharma',
+      driverPhone: '+91 98112 00102',
+      etaMinutes: 5,
+      coordinates: coordinates || { lat: 28.5672, lng: 77.2100 },
+      locationAddress: address || 'New Delhi, Verified via GPS',
       chiefComplaint: chiefComplaint || 'Critical Emergency Acuity Escalation'
     };
 
     logAuditEvent(
       'EMS_Dispatcher',
-      'Automated 911 EMS Dispatch Subsystem',
-      `EMERGENCY 911 DISPATCH ACTIVATED (Case #${caseId})`,
+      'Automated 102 Ambulance Dispatch Subsystem',
+      `EMERGENCY 102 AMBULANCE DISPATCH ACTIVATED (Case #${caseId})`,
       'EMERGENCY_DISPATCH',
       `Unit ${dispatchInfo.ambulanceUnit} dispatched to ${dispatchInfo.locationAddress}. Estimated ETA: ${dispatchInfo.etaMinutes} minutes.`,
       req

@@ -26,16 +26,16 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
   isOpen,
   onClose,
   caseId,
-  patientName = 'Eleanor Vance',
+  patientName = 'Priya Sharma',
   chiefComplaint = 'Acute emergency symptom escalation'
 }) => {
   const [isDispatched, setIsDispatched] = useState(false);
-  const [etaMinutes, setEtaMinutes] = useState(6);
+  const [etaMinutes, setEtaMinutes] = useState(5);
   const [dispatchStatus, setDispatchStatus] = useState<'Triggered' | 'Dispatched' | 'En Route' | 'On Scene'>('Dispatched');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; address: string }>({
-    lat: 37.7749,
-    lng: -122.4194,
-    address: '742 Evergreen Terrace, San Francisco, CA (Verified via GPS)'
+    lat: 28.5672,
+    lng: 77.2100,
+    address: 'Safdarjung Enclave / Green Park, New Delhi - 110029 (Verified via GPS)'
   });
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
             setUserLocation({
               lat: pos.coords.latitude,
               lng: pos.coords.longitude,
-              address: `GPS: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (Verified User Location)`
+              address: `GPS: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (Verified User Location in India)`
             });
           },
           (err) => console.log('Geolocation permission skipped:', err.message),
@@ -87,7 +87,7 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
       });
       setIsDispatched(true);
       setDispatchStatus('Dispatched');
-      setEtaMinutes(6);
+      setEtaMinutes(5);
     } catch (err) {
       setIsDispatched(true);
     }
@@ -106,12 +106,12 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-black uppercase tracking-widest bg-white text-rose-700 px-2 py-0.5 rounded">
-                  911 EMS Alert Subsystem
+                  102 Ambulance SOS (India)
                 </span>
                 <span className="text-xs text-rose-100 font-semibold">Priority 1 Code Red</span>
               </div>
               <h2 className="text-xl font-black mt-0.5">
-                Emergency Dispatch & Critical Response
+                Emergency 102 Ambulance Dispatch
               </h2>
             </div>
           </div>
@@ -137,10 +137,10 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
               </div>
               <div>
                 <h3 className="text-lg font-black text-rose-950">
-                  Are you experiencing life-threatening symptoms?
+                  Are you or the patient in a critical emergency?
                 </h3>
                 <p className="text-xs text-rose-800 max-w-md mx-auto mt-1 leading-relaxed">
-                  Clicking below immediately alerts local emergency services (911 EMS), locks in your GPS coordinates, and notifies our hospital trauma team.
+                  Clicking below immediately alerts the National 102 Ambulance Service, transmits GPS coordinates, and alerts the receiving trauma casualty ward at AIIMS New Delhi.
                 </p>
               </div>
 
@@ -152,15 +152,25 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-sm font-black rounded-xl shadow-lg shadow-rose-600/30 transition-all cursor-pointer"
                 >
                   <Ambulance className="w-5 h-5" />
-                  <span>Activate Immediate EMS Ambulance Dispatch</span>
+                  <span>Dispatch 102 Ambulance (Free)</span>
                 </button>
 
                 <a
-                  href="tel:911"
+                  href="tel:102"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-black rounded-xl shadow-md transition-all"
                 >
                   <PhoneCall className="w-4 h-4" />
-                  <span>Direct Call 911</span>
+                  <span>Direct Dial 102</span>
+                </a>
+              </div>
+
+              {/* Secondary helpline chips for India */}
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-xs">
+                <a href="tel:108" className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 hover:border-teal-500 font-medium">
+                  Dial 108 (Disaster / ALS)
+                </a>
+                <a href="tel:112" className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 hover:border-blue-500 font-medium">
+                  Dial 112 (National Unified)
                 </a>
               </div>
             </div>
@@ -177,7 +187,7 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
                       Status: {dispatchStatus}
                     </span>
                     <h4 className="text-base font-black text-emerald-950">
-                      Medic Unit 9 (Paramedic ALS) En Route
+                      102 ALS Ambulance (DL-01-EA-4021) En Route
                     </h4>
                   </div>
                 </div>
@@ -198,9 +208,9 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
                 </div>
 
                 <div className="bg-white p-3 rounded-xl border border-emerald-100 space-y-1">
-                  <span className="text-slate-400 font-bold block">Nearest Receiving ER:</span>
-                  <span className="font-bold text-slate-900 block">Metro Health Emergency Center</span>
-                  <span className="text-[11px] text-slate-500">Trauma Level 1 Facility (2.4 miles)</span>
+                  <span className="text-slate-400 font-bold block">Receiving Emergency Casualty:</span>
+                  <span className="font-bold text-slate-900 block">AIIMS JPN Apex Trauma Centre</span>
+                  <span className="text-[11px] text-slate-500">Ring Road, New Delhi (2.4 km)</span>
                 </div>
               </div>
 
@@ -211,11 +221,11 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
             </div>
           )}
 
-          {/* Life-Saving First Aid Protocol Guides (While Awaiting Paramedics) */}
+          {/* Life-Saving First Aid Protocol Guides (India Specific) */}
           <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50 space-y-3">
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
               <HeartPulse className="w-4 h-4 text-rose-600" />
-              Pre-Arrival First Aid Guidelines (Perform Now)
+              Pre-Arrival First Aid Guidelines (Perform Now While Waiting)
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
@@ -224,7 +234,7 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
                   Suspected Heart Attack / Chest Pain:
                 </strong>
                 <p className="text-slate-600 leading-relaxed">
-                  Chew one adult aspirin (324 mg) if no severe allergy. Rest sitting upright. Unlock front door for responders.
+                  Chew 1 tablet Disprin (Aspirin 300mg) immediately if not allergic. Rest sitting upright. Unlock main house door for responders.
                 </p>
               </div>
 
@@ -239,19 +249,19 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
 
               <div className="bg-white p-3 rounded-xl border border-slate-200">
                 <strong className="text-slate-900 block font-bold mb-1">
-                  Severe Allergic Reaction (Anaphylaxis):
+                  Asthma or Severe Breathlessness:
                 </strong>
                 <p className="text-slate-600 leading-relaxed">
-                  Use prescribed Epinephrine auto-injector (EpiPen) into outer thigh immediately. Hold for 5 seconds. Lie down with legs elevated.
+                  Sit leaning forward. Administer 2-4 puffs of Asthalin/Salbutamol inhaler with spacer. Keep room well ventilated.
                 </p>
               </div>
 
               <div className="bg-white p-3 rounded-xl border border-slate-200">
                 <strong className="text-slate-900 block font-bold mb-1">
-                  Severe Bleeding or Trauma:
+                  Accident Trauma or Bleeding:
                 </strong>
                 <p className="text-slate-600 leading-relaxed">
-                  Apply firm, continuous direct pressure with clean cloth. Keep warm with blankets to prevent physiologic shock.
+                  Apply continuous firm pressure on wound with a clean cloth. Elevate limb. Keep patient warm with blankets.
                 </p>
               </div>
             </div>
@@ -261,7 +271,7 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
 
         {/* Modal Footer */}
         <div className="p-4 bg-slate-100 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
-          <span>HIPAA Audit Log Entry #EMR-911-ACT generated.</span>
+          <span>ABDM & Safe Harbor Protected • Case Dispatched via 102 NAS.</span>
           <button
             type="button"
             onClick={onClose}
@@ -275,3 +285,4 @@ export const EmergencyAlertModal: React.FC<EmergencyAlertModalProps> = ({
     </div>
   );
 };
+

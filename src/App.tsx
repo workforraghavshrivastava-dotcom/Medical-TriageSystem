@@ -14,7 +14,11 @@ import {
   CheckCircle2,
   ChevronRight,
   Heart,
-  PhoneCall
+  PhoneCall,
+  Ambulance,
+  Building2,
+  CreditCard,
+  Sliders
 } from 'lucide-react';
 import { 
   PatientProfile, 
@@ -31,7 +35,11 @@ import {
 } from './types';
 import { DEFAULT_PATIENT, MOCK_TRIAGE_CASES, INITIAL_MESSAGES, INITIAL_AUDIT_LOGS } from './mockData';
 import { translations } from './translations';
-import { Header } from './components/Header';
+import { Header, AppPageId } from './components/Header';
+import { MinimalistEmergencyTriage } from './components/MinimalistEmergencyTriage';
+import { AmbulanceDispatchPage } from './components/AmbulanceDispatchPage';
+import { HospitalFinderPage } from './components/HospitalFinderPage';
+import { AbhaHealthLockerPage } from './components/AbhaHealthLockerPage';
 import { TriageIntakeForm } from './components/TriageIntakeForm';
 import { TriageResultCard } from './components/TriageResultCard';
 import { ClinicianDashboard } from './components/ClinicianDashboard';
@@ -40,12 +48,18 @@ import { UserHistoryView } from './components/UserHistoryView';
 import { EmergencyAlertModal } from './components/EmergencyAlertModal';
 import { HipaaPrivacyModal } from './components/HipaaPrivacyModal';
 import { EhrIntegrationModal } from './components/EhrIntegrationModal';
+import { HomePageHub } from './components/HomePageHub';
+import { evaluateClinicalRules } from './utils/clinicalRulesEngine';
 
 export default function App() {
-  // Navigation & Role State
+  // Navigation & Page State
   const [activeRole, setActiveRole] = useState<'patient' | 'clinician'>('patient');
+  const [activePage, setActivePage] = useState<AppPageId>('home');
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>('en');
-  const [activeTab, setActiveTab] = useState<'intake' | 'result' | 'history' | 'messages'>('intake');
+  
+  // Triage view mode: 'minimalist' (default for emergency) or 'comprehensive'
+  const [triageMode, setTriageMode] = useState<'minimalist' | 'comprehensive'>('minimalist');
+  const [comprehensiveTab, setComprehensiveTab] = useState<'intake' | 'result'>('intake');
 
   // Core Data
   const [patient, setPatient] = useState<PatientProfile>(DEFAULT_PATIENT);
@@ -66,6 +80,7 @@ export default function App() {
   const [isLoadingTriage, setIsLoadingTriage] = useState<boolean>(false);
 
   // Active translation dictionary
+  const isHindi = currentLanguage === 'hi';
   const t = translations[currentLanguage] || translations.en;
 
   // Selected Case Reference
@@ -93,7 +108,7 @@ export default function App() {
       .catch(err => console.log('Initial audit logs fetch error:', err));
   }, []);
 
-  // Handle Triage Submission
+  // Handle Triage Submission (both Minimalist and Comprehensive)
   const handleAnalyzeTriage = async (formData: {
     chiefComplaint: string;
     detailedSymptoms: string;
@@ -108,6 +123,51 @@ export default function App() {
     medicalRecordText?: string;
   }) => {
     setIsLoadingTriage(true);
+
+    // Instant clinical rule-based triage assessment (<5ms)
+    const instantRuleAnalysis = evaluateClinicalRules({
+      chiefComplaint: formData.chiefComplaint,
+      detailedSymptoms: formData.detailedSymptoms,
+      vitals: formData.vitals,
+      patient,
+      painScale: formData.painScale,
+      language: currentLanguage
+    });
+
+    // Immediately display fast, tailored rule-based results so user doesn't wait
+    setCurrentResult(instantRuleAnalysis);
+
+    const localCaseId = `TRG-${Math.floor(100 + Math.random() * 900)}`;
+    const localCaseItem: TriageCase = {
+      id: localCaseId,
+      timestamp: new Date().toISOString(),
+      patient,
+      chiefComplaint: formData.chiefComplaint || 'Emergency triage assessment',
+      detailedSymptoms: formData.detailedSymptoms || '',
+      onset: 'Acute onset',
+      duration: 'Under 2 hours',
+      painScale: formData.painScale || 5,
+      vitals: formData.vitals,
+      attachments: formData.attachments || [],
+      labResults: formData.labResults || [],
+      analysis: instantRuleAnalysis,
+      status: instantRuleAnalysis.esiLevel <= 2 ? 'emergency_escalated' : 'ai_evaluated',
+      messages: [],
+      language: currentLanguage
+    };
+
+    setCases(prev => [localCaseItem, ...prev]);
+    setSelectedCaseId(localCaseId);
+    setActiveFhirCase(localCaseItem);
+    setComprehensiveTab('result');
+
+    // If critical ESI 1 or 2, open emergency 102 modal prompt
+    if (instantRuleAnalysis.esiLevel <= 2) {
+      setTimeout(() => {
+        setIsEmergencyModalOpen(true);
+      }, 1000);
+    }
+
     try {
       const response = await fetch('/api/triage/analyze', {
         method: 'POST',
@@ -130,35 +190,31 @@ export default function App() {
       });
 
       const data = await response.json();
-      if (data.analysis && data.caseItem) {
-        setCurrentResult(data.analysis);
-        setCases(prev => [data.caseItem, ...prev]);
-        setSelectedCaseId(data.caseItem.id);
-        setActiveFhirCase(data.caseItem);
-        setActiveTab('result');
-
-        // Log audit trail
-        const newLog: AuditLogEntry = {
-          id: `log-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          actorRole: 'Patient',
-          actorName: `${patient.firstName} ${patient.lastName}`,
-          action: 'EHR_TRIAGE_RUN',
-          resourceType: 'TRIAGE_ANALYSIS',
-          details: `AI Triage evaluation initiated. Resulting ESI Acuity: ${data.analysis.esiLevel}`,
-          ipMasked: '192.168.***.***'
-        };
-        setAuditLogs(prev => [newLog, ...prev]);
-
-        // If ESI 1 or 2, prompt emergency modal after 1.5s
-        if (data.analysis.esiLevel <= 2) {
-          setTimeout(() => {
-            setIsEmergencyModalOpen(true);
-          }, 1200);
+      const serverAnalysis = data.analysis || (data.esiLevel ? data : null);
+      if (serverAnalysis) {
+        // If server provided enhanced analysis (e.g. multimodal findings), update smoothly
+        setCurrentResult(serverAnalysis);
+        if (data.caseItem) {
+          setCases(prev => [data.caseItem, ...prev.filter(c => c.id !== localCaseId)]);
+          setSelectedCaseId(data.caseItem.id);
+          setActiveFhirCase(data.caseItem);
         }
       }
+
+      // Log audit trail
+      const newLog: AuditLogEntry = {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actorRole: 'Patient',
+        actorName: `${patient.firstName} ${patient.lastName}`,
+        action: 'EHR_TRIAGE_RUN',
+        resourceType: 'TRIAGE_ANALYSIS',
+        details: `Rule-based triage evaluation completed. Resulting ESI Acuity: ${instantRuleAnalysis.esiLevel}`,
+        ipMasked: '103.21.***.***'
+      };
+      setAuditLogs(prev => [newLog, ...prev]);
     } catch (err) {
-      console.error('Triage analysis error:', err);
+      console.warn('Network sync notice (local rule engine provided full results):', err);
     } finally {
       setIsLoadingTriage(false);
     }
@@ -229,7 +285,6 @@ export default function App() {
 
     setMessages(prev => [...prev, newMessage]);
 
-    // Send to backend
     try {
       await fetch('/api/messages', {
         method: 'POST',
@@ -248,34 +303,208 @@ export default function App() {
         firstName: 'PATIENT',
         lastName: '#89421',
         mrn: 'MRN-***4190',
-        dateOfBirth: '1974-**-**',
-        contactPhone: '(***) ***-9988'
+        dateOfBirth: '1988-**-**',
+        contactPhone: '+91 98*** 0021'
       }
     : patient;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans antialiased">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased">
       
-      {/* Global Clinical Header */}
+      {/* Global Minimalist Header */}
       <Header
-        activeRole={activeRole}
-        onRoleChange={(role) => setActiveRole(role)}
-        selectedLanguage={currentLanguage}
-        onLanguageChange={(lang) => setCurrentLanguage(lang)}
-        onOpenEmergency={() => setIsEmergencyModalOpen(true)}
-        onOpenPrivacy={() => setIsPrivacyModalOpen(true)}
-        onOpenEhr={() => {
-          setActiveFhirCase(currentCase);
-          setIsEhrModalOpen(true);
+        currentRole={activeRole}
+        onRoleChange={(role) => {
+          setActiveRole(role);
+          if (role === 'clinician') {
+            setActivePage('clinician');
+          } else if (activePage === 'clinician') {
+            setActivePage('triage');
+          }
         }}
-        isDeidentified={isPhiDeidentified}
+        activePage={activePage}
+        onPageChange={(page) => {
+          setActivePage(page);
+          if (page === 'clinician') {
+            setActiveRole('clinician');
+          } else {
+            setActiveRole('patient');
+          }
+        }}
+        language={currentLanguage}
+        onLanguageChange={(lang) => setCurrentLanguage(lang)}
+        onOpenPrivacy={() => setIsPrivacyModalOpen(true)}
+        onOpenEmergency={() => setIsEmergencyModalOpen(true)}
+        isSyncing={false}
+        activeCaseCount={cases.filter(c => (c.clinicianOverrideEsi || c.analysis?.esiLevel || 3) <= 2).length}
       />
 
       {/* Main App Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-6">
         
-        {/* Clinician Mode View */}
-        {activeRole === 'clinician' ? (
+        {/* Page 0: Interactive Visual Home Page Hub */}
+        {activePage === 'home' && (
+          <HomePageHub
+            onNavigate={(page) => {
+              setActivePage(page);
+              if (page === 'clinician') {
+                setActiveRole('clinician');
+              } else {
+                setActiveRole('patient');
+              }
+            }}
+            onOpenEmergencyModal={() => setIsEmergencyModalOpen(true)}
+            onOpenPrivacyModal={() => setIsPrivacyModalOpen(true)}
+            language={currentLanguage}
+            activeCaseCount={cases.filter(c => (c.clinicianOverrideEsi || c.analysis?.esiLevel || 3) <= 2).length}
+          />
+        )}
+
+        {/* Page 1: Triage (Emergency Minimalist Default) */}
+        {activePage === 'triage' && (
+          <div className="space-y-4">
+            
+            {/* View Mode Sub-Toggle: Fast Minimalist vs. Comprehensive Form */}
+            <div className="flex items-center justify-between bg-white border border-slate-200/80 rounded-2xl px-4 py-2.5 shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs font-bold text-slate-700">
+                  {triageMode === 'minimalist' 
+                    ? (isHindi ? 'त्वरित आपातकालीन मोड (1-टैप ट्राइएज)' : 'Emergency Zero-Friction Mode')
+                    : (isHindi ? 'विस्तृत क्लिनिकल फॉर्म' : 'Comprehensive Clinical Intake Form')}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTriageMode(triageMode === 'minimalist' ? 'comprehensive' : 'minimalist')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-slate-500" />
+                  <span>
+                    {triageMode === 'minimalist' 
+                      ? (isHindi ? 'विस्तृत फॉर्म देखें' : 'Switch to Detailed Form')
+                      : (isHindi ? 'त्वरित मोड पर लौटें' : 'Switch to Minimalist')}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePage('history')}
+                  className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors"
+                >
+                  <History className="w-3.5 h-3.5 text-teal-600" />
+                  <span>{isHindi ? 'इतिहास' : 'History'} ({cases.length})</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Minimalist Emergency View */}
+            {triageMode === 'minimalist' ? (
+              <MinimalistEmergencyTriage
+                patient={displayPatient}
+                language={currentLanguage}
+                onAnalyze={handleAnalyzeTriage}
+                isLoading={isLoadingTriage}
+                currentResult={currentResult}
+                onOpen102Modal={() => setIsEmergencyModalOpen(true)}
+                onNavigateToAmbulancePage={() => setActivePage('ambulance')}
+                onNavigateToHospitalsPage={() => setActivePage('hospitals')}
+              />
+            ) : (
+              /* Comprehensive Mode (Detailed Vitals, Media, Form) */
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setComprehensiveTab('intake')}
+                    className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                      comprehensiveTab === 'intake'
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                  >
+                    Intake Form
+                  </button>
+                  {currentResult && (
+                    <button
+                      type="button"
+                      onClick={() => setComprehensiveTab('result')}
+                      className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                        comprehensiveTab === 'result'
+                          ? 'bg-teal-600 text-white shadow-xs'
+                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      AI Triage Result (ESI {currentResult.esiLevel})
+                    </button>
+                  )}
+                </div>
+
+                {comprehensiveTab === 'intake' ? (
+                  <TriageIntakeForm
+                    patient={displayPatient}
+                    language={currentLanguage}
+                    onSubmitTriage={handleAnalyzeTriage}
+                    isLoading={isLoadingTriage}
+                  />
+                ) : (
+                  currentResult && (
+                    <TriageResultCard
+                      result={currentResult}
+                      onOpenMessaging={() => setActivePage('messages')}
+                      onOpenEmergency={() => setIsEmergencyModalOpen(true)}
+                      onViewFhir={() => {
+                        setActiveFhirCase(currentCase);
+                        setIsEhrModalOpen(true);
+                      }}
+                      onConnectClinician={() => {
+                        setActiveRole('clinician');
+                        setActivePage('clinician');
+                      }}
+                      onReset={() => setComprehensiveTab('intake')}
+                    />
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Page 2: 102 Ambulance Dispatch Live Tracking */}
+        {activePage === 'ambulance' && (
+          <AmbulanceDispatchPage
+            language={currentLanguage}
+            patientName={`${displayPatient.firstName} ${displayPatient.lastName}`}
+            onBackToTriage={() => setActivePage('triage')}
+          />
+        )}
+
+        {/* Page 3: Emergency Casualty Hospitals Finder */}
+        {activePage === 'hospitals' && (
+          <HospitalFinderPage
+            language={currentLanguage}
+            onBackToTriage={() => setActivePage('triage')}
+            onCallAmbulance={() => setActivePage('ambulance')}
+          />
+        )}
+
+        {/* Page 4: ABHA Digital Health Locker & Ayushman Card */}
+        {activePage === 'abha' && (
+          <AbhaHealthLockerPage
+            patient={displayPatient}
+            language={currentLanguage}
+            onBackToTriage={() => setActivePage('triage')}
+            onOpenFhirModal={() => {
+              setActiveFhirCase(currentCase);
+              setIsEhrModalOpen(true);
+            }}
+          />
+        )}
+
+        {/* Page 5: Clinician Command Dashboard */}
+        {activePage === 'clinician' && (
           <ClinicianDashboard
             cases={cases}
             selectedCaseId={selectedCaseId}
@@ -283,7 +512,7 @@ export default function App() {
             onUpdateDisposition={handleUpdateDisposition}
             onOpenMessaging={(caseId) => {
               setSelectedCaseId(caseId);
-              setActiveTab('messages');
+              setActivePage('messages');
             }}
             onViewFhir={(caseItem) => {
               setActiveFhirCase(caseItem);
@@ -291,146 +520,46 @@ export default function App() {
             }}
             onOpenEmergency={() => setIsEmergencyModalOpen(true)}
           />
-        ) : (
-          /* Patient Mode View */
-          <div className="space-y-6">
-            
-            {/* Patient Navigation Tabs */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-1.5 shadow-xs flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  id="tab-intake-btn"
-                  onClick={() => setActiveTab('intake')}
-                  className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'intake'
-                      ? 'bg-teal-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Symptom Intake</span>
-                </button>
+        )}
 
-                {currentResult && (
-                  <button
-                    type="button"
-                    id="tab-result-btn"
-                    onClick={() => setActiveTab('result')}
-                    className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                      activeTab === 'result'
-                        ? 'bg-teal-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Activity className="w-4 h-4" />
-                    <span>Triage Result</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-black text-white ${
-                      currentResult.esiLevel <= 2 ? 'bg-rose-600' : currentResult.esiLevel === 3 ? 'bg-amber-600' : 'bg-emerald-600'
-                    }`}>
-                      ESI {currentResult.esiLevel}
-                    </span>
-                  </button>
-                )}
+        {/* Page 6: Patient History */}
+        {activePage === 'history' && (
+          <UserHistoryView
+            cases={cases}
+            onSelectCase={(c) => {
+              setSelectedCaseId(c.id);
+              if (c.analysis) {
+                setCurrentResult(c.analysis);
+                setActivePage('triage');
+              }
+            }}
+            onViewFhir={(c) => {
+              setActiveFhirCase(c);
+              setIsEhrModalOpen(true);
+            }}
+            onStartNewTriage={() => setActivePage('triage')}
+          />
+        )}
 
-                <button
-                  type="button"
-                  id="tab-history-btn"
-                  onClick={() => setActiveTab('history')}
-                  className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'history'
-                      ? 'bg-teal-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <History className="w-4 h-4" />
-                  <span>{t.userHistoryTab}</span>
-                  <span className="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded text-[10px] font-mono">
-                    {cases.length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  id="tab-messages-btn"
-                  onClick={() => setActiveTab('messages')}
-                  className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'messages'
-                      ? 'bg-teal-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  <span>{t.secureMessagingTab}</span>
-                </button>
-              </div>
-
-              {/* Status Indicator */}
-              <div className="flex items-center gap-3 px-3 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5">
-                  <Wifi className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="font-semibold text-emerald-700">Encrypted Cloud Sync</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Tab 1: Intake Form */}
-            {activeTab === 'intake' && (
-              <TriageIntakeForm
-                patient={displayPatient}
-                language={currentLanguage}
-                onSubmitTriage={handleAnalyzeTriage}
-                isLoading={isLoadingTriage}
-              />
-            )}
-
-            {/* Tab 2: Triage Result */}
-            {activeTab === 'result' && currentResult && (
-              <TriageResultCard
-                result={currentResult}
-                onOpenMessaging={() => setActiveTab('messages')}
-                onOpenEmergency={() => setIsEmergencyModalOpen(true)}
-                onViewFhir={() => {
-                  setActiveFhirCase(currentCase);
-                  setIsEhrModalOpen(true);
-                }}
-                onConnectClinician={() => setActiveRole('clinician')}
-                onReset={() => setActiveTab('intake')}
-              />
-            )}
-
-            {/* Tab 3: History */}
-            {activeTab === 'history' && (
-              <UserHistoryView
-                cases={cases}
-                onSelectCase={(c) => {
-                  setSelectedCaseId(c.id);
-                  if (c.analysis) {
-                    setCurrentResult(c.analysis);
-                    setActiveTab('result');
-                  }
-                }}
-                onViewFhir={(c) => {
-                  setActiveFhirCase(c);
-                  setIsEhrModalOpen(true);
-                }}
-                onStartNewTriage={() => setActiveTab('intake')}
-              />
-            )}
-
-            {/* Tab 4: Secure Messaging */}
-            {activeTab === 'messages' && (
-              <SecureMessagingPortal
-                messages={messages}
-                currentRole={activeRole}
-                patientName={`${displayPatient.firstName} ${displayPatient.lastName}`}
-                clinicianName="Dr. Marcus Chen, MD (Emergency Medicine)"
-                onSendMessage={handleSendMessage}
-                onOpenEmergency={() => setIsEmergencyModalOpen(true)}
-                language={currentLanguage}
-              />
-            )}
-
+        {/* Page 7: Secure Messaging */}
+        {activePage === 'messages' && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => setActivePage('triage')}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 mb-2 cursor-pointer"
+            >
+              <span>← Back to Triage</span>
+            </button>
+            <SecureMessagingPortal
+              messages={messages}
+              currentRole={activeRole}
+              patientName={`${displayPatient.firstName} ${displayPatient.lastName}`}
+              clinicianName="Dr. Marcus Chen, MD (Emergency Medicine)"
+              onSendMessage={handleSendMessage}
+              onOpenEmergency={() => setIsEmergencyModalOpen(true)}
+              language={currentLanguage}
+            />
           </div>
         )}
 
@@ -459,20 +588,22 @@ export default function App() {
         triageCase={activeFhirCase}
       />
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-4 px-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      {/* Aesthetic Micro Footer */}
+      <footer className="bg-white border-t border-slate-200/80 py-4 px-4 text-center text-xs text-slate-500">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800">AegisTriage Clinical AI™</span>
+            <span className="font-extrabold text-slate-800">MySwaasth India</span>
             <span>•</span>
-            <span>Emergency Severity Index (ESI v4) & FHIR R4 Compliant</span>
+            <span className="font-medium text-slate-600">102 National Ambulance Service</span>
+            <span>•</span>
+            <span className="text-teal-700 font-medium">ABDM & ESI v4 Compliant</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-emerald-700 font-semibold flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> HIPAA Security Rule Validated
+              <ShieldCheck className="w-3.5 h-3.5" /> End-to-End Encrypted
             </span>
             <span>•</span>
-            <span className="font-mono text-slate-400">Build 2026.4.1</span>
+            <span className="font-mono text-slate-400">Emergency Helpline: 102 / 108 / 112</span>
           </div>
         </div>
       </footer>

@@ -1,38 +1,41 @@
-import { PatientProfile, TriageCase, AuditLogEntry } from './types';
+import { PatientProfile, TriageCase, AuditLogEntry, IndianHospital } from './types';
 
 export const INITIAL_PATIENT: PatientProfile = {
-  id: 'PT-89421',
-  mrn: 'MRN-7734190',
-  firstName: 'Eleanor',
-  lastName: 'Vance',
-  dateOfBirth: '1974-06-18',
-  age: 52,
+  id: 'PT-IN-89421',
+  mrn: 'ABDM-994102',
+  abhaId: '91-7823-4412-9012',
+  abhaAddress: 'priya.sharma@abdm',
+  pmjayCovered: true,
+  firstName: 'Priya',
+  lastName: 'Sharma',
+  dateOfBirth: '1976-08-15',
+  age: 49,
   sex: 'Female',
-  bloodType: 'A+',
-  weightKg: 68.5,
-  heightCm: 167,
+  bloodType: 'B+',
+  weightKg: 64.0,
+  heightCm: 162,
   allergies: [
-    { allergen: 'Penicillin', reaction: 'Anaphylaxis, hives, bronchospasm', severity: 'Life-Threatening' },
-    { allergen: 'Sulfa Drugs', reaction: 'Severe maculopapular rash', severity: 'Moderate' }
+    { allergen: 'Penicillin', reaction: 'Anaphylaxis, severe hives, throat tightness', severity: 'Life-Threatening' },
+    { allergen: 'Sulfa Drugs', reaction: 'Maculopapular rash', severity: 'Moderate' }
   ],
   chronicConditions: [
     'Essential Hypertension (ICD-10 I10)',
     'Type 2 Diabetes Mellitus (ICD-10 E11.9)',
-    'Mild Intermittent Asthma (ICD-10 J45.20)'
+    'Mild Asthma (ICD-10 J45.20)'
   ],
   medications: [
-    { name: 'Lisinopril', dosage: '20 mg', frequency: 'Once daily PO', indication: 'Hypertension' },
-    { name: 'Metformin HCl', dosage: '1000 mg', frequency: 'Twice daily with meals', indication: 'T2DM' },
-    { name: 'Albuterol HFA Inhaler', dosage: '90 mcg/actuation', frequency: '2 puffs PRN wheezing', indication: 'Asthma' }
+    { name: 'Amlodipine Besylate', dosage: '5 mg', frequency: 'Once daily morning', indication: 'Hypertension' },
+    { name: 'Metformin HCl', dosage: '500 mg', frequency: 'Twice daily with meals', indication: 'T2DM' },
+    { name: 'Asthalin Inhaler (Salbutamol)', dosage: '100 mcg', frequency: '2 puffs PRN wheezing', indication: 'Asthma' }
   ],
   pastSurgeries: [
-    'Laparoscopic Cholecystectomy (2018)',
-    'Right Knee Arthroscopy (2021)'
+    'Laparoscopic Cholecystectomy (AIIMS New Delhi, 2019)',
+    'Cesarean Delivery (2004)'
   ],
   emergencyContact: {
-    name: 'David Vance',
+    name: 'Rajesh Sharma',
     relationship: 'Spouse',
-    phone: '+1 (555) 349-8120'
+    phone: '+91 98101 23456'
   },
   preferredLanguage: 'en'
 };
@@ -42,11 +45,11 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
     id: 'AUD-991',
     timestamp: new Date(Date.now() - 3600000 * 4).toISOString(),
     actorRole: 'Patient',
-    actorName: 'Eleanor Vance',
-    action: 'Session Authentication & Biometric Verification',
+    actorName: 'Priya Sharma',
+    action: 'ABHA 2FA Verification & Session Authentication',
     resourceType: 'PHI_VIEW',
-    details: 'Patient authenticated via secure 2FA session. Token issued.',
-    ipMasked: '192.168.1.***'
+    details: 'Patient authenticated via ABHA OTP verification. ABDM token issued.',
+    ipMasked: '103.24.***.***'
   },
   {
     id: 'AUD-992',
@@ -55,7 +58,7 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
     actorName: 'Gemini Medical Clinical Engine',
     action: 'Multi-Modal Triage Evaluation (Case #TRG-104)',
     resourceType: 'TRIAGE_ANALYSIS',
-    details: 'Analyzed chief complaint, ECG rhythm strip photo, and elevated Troponin lab report. Assigned ESI Level 2.',
+    details: 'Analyzed acute substernal chest pain, ECG rhythm strip, and vitals. Assigned ESI Level 2 (Priority 1 Red).',
     ipMasked: 'Internal Service Mesh'
   },
   {
@@ -73,7 +76,7 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
     timestamp: new Date(Date.now() - 3600000 * 1).toISOString(),
     actorRole: 'Triage Clinician',
     actorName: 'Nurse Sarah Jenkins, RN (CEN)',
-    action: 'FHIR R4 Bundle Synchronization to Epic EHR',
+    action: 'FHIR R4 Bundle Synchronization to Hospital EHR',
     resourceType: 'EHR_EXPORT',
     details: 'Exported FHIR bundle with Patient, Observation, and Condition resources to hospital EHR endpoint.',
     ipMasked: '10.240.42.***'
@@ -225,7 +228,7 @@ export const INITIAL_CASES: TriageCase[] = [
         id: 'msg-1',
         caseId: 'TRG-104',
         sender: 'system',
-        senderName: 'AegisTriage Automated Protocol',
+        senderName: 'MySwaasth Automated Protocol',
         text: 'Emergency Severity Index 2 assigned. Care team notified. Secure HIPAA encrypted channel opened.',
         timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
         isUrgent: true
@@ -316,4 +319,136 @@ export const INITIAL_CASES: TriageCase[] = [
 export const DEFAULT_PATIENT = INITIAL_PATIENT;
 export const MOCK_TRIAGE_CASES = INITIAL_CASES;
 export const INITIAL_MESSAGES = INITIAL_CASES[0]?.messages || [];
+
+export const INDIAN_EMERGENCY_HOSPITALS: IndianHospital[] = [
+  {
+    id: 'hosp-aiims-delhi',
+    name: 'AIIMS - JPN Apex Trauma Centre',
+    type: 'Government Apex',
+    city: 'New Delhi',
+    distanceKm: 2.4,
+    travelTimeMins: 8,
+    address: 'Ring Road, Safdarjung Enclave, New Delhi - 110029',
+    emergencyPhone: '011-26731000',
+    casualtyAvailable: true,
+    icuBedsAvailable: 14,
+    hasCathLab: true,
+    hasTraumaLevel1: true,
+    pmjayCashless: true
+  },
+  {
+    id: 'hosp-safdarjung',
+    name: 'Safdarjung Hospital Emergency Block',
+    type: 'Government Apex',
+    city: 'New Delhi',
+    distanceKm: 2.8,
+    travelTimeMins: 10,
+    address: 'Ansari Nagar West, Ring Road, New Delhi - 110029',
+    emergencyPhone: '011-26165060',
+    casualtyAvailable: true,
+    icuBedsAvailable: 9,
+    hasCathLab: true,
+    hasTraumaLevel1: true,
+    pmjayCashless: true
+  },
+  {
+    id: 'hosp-apollo-delhi',
+    name: 'Indraprastha Apollo Emergency & Trauma',
+    type: 'Private Super Speciality',
+    city: 'New Delhi',
+    distanceKm: 5.6,
+    travelTimeMins: 14,
+    address: 'Delhi-Mathura Road, Sarita Vihar, New Delhi - 110076',
+    emergencyPhone: '1066',
+    casualtyAvailable: true,
+    icuBedsAvailable: 18,
+    hasCathLab: true,
+    hasTraumaLevel1: true,
+    pmjayCashless: true
+  },
+  {
+    id: 'hosp-max-saket',
+    name: 'Max Super Speciality Hospital (Casualty)',
+    type: 'Private Super Speciality',
+    city: 'New Delhi',
+    distanceKm: 4.1,
+    travelTimeMins: 12,
+    address: '1, 2 Press Enclave Marg, Saket, New Delhi - 110017',
+    emergencyPhone: '011-40554055',
+    casualtyAvailable: true,
+    icuBedsAvailable: 11,
+    hasCathLab: true,
+    hasTraumaLevel1: true,
+    pmjayCashless: true
+  },
+  {
+    id: 'hosp-fortis-escorts',
+    name: 'Fortis Escorts Heart Institute (Cardiac ER)',
+    type: 'Private Super Speciality',
+    city: 'New Delhi',
+    distanceKm: 6.2,
+    travelTimeMins: 16,
+    address: 'Okhla Road, Sukhdev Vihar Metro Station, New Delhi - 110025',
+    emergencyPhone: '011-47135000',
+    casualtyAvailable: true,
+    icuBedsAvailable: 8,
+    hasCathLab: true,
+    hasTraumaLevel1: false,
+    pmjayCashless: true
+  },
+  {
+    id: 'hosp-rml-delhi',
+    name: 'Dr. Ram Manohar Lohia Hospital Emergency',
+    type: 'Government District',
+    city: 'New Delhi',
+    distanceKm: 7.0,
+    travelTimeMins: 18,
+    address: 'Baba Kharak Singh Marg, Connaught Place, New Delhi - 110001',
+    emergencyPhone: '011-23365525',
+    casualtyAvailable: true,
+    icuBedsAvailable: 6,
+    hasCathLab: true,
+    hasTraumaLevel1: true,
+    pmjayCashless: true
+  }
+];
+
+export const INDIAN_EMERGENCY_HELPLINES = [
+  {
+    number: '102',
+    title: 'National Ambulance Service (Free)',
+    hindiTitle: 'राष्ट्रीय एम्बुलेंस सेवा (102)',
+    desc: 'Government Free 102 Ambulance across India for critical emergencies, maternal and pediatric transit',
+    badge: 'Primary 102',
+    tel: '102',
+    isPrimary: true
+  },
+  {
+    number: '108',
+    title: 'Emergency Medical & Trauma Response (ALS/BLS)',
+    hindiTitle: 'आपातकालीन चिकित्सा एवं ट्रॉमा सेवा',
+    desc: 'State Emergency Medical Services with trained paramedics and life support equipment',
+    badge: '24x7 ALS',
+    tel: '108',
+    isPrimary: false
+  },
+  {
+    number: '112',
+    title: 'National Unified Emergency Response (ERSS)',
+    hindiTitle: 'एकीकृत राष्ट्रीय आपातकालीन हेल्पलाइन',
+    desc: 'Unified Pan-India single emergency number for Police, Fire, and Medical Assistance',
+    badge: 'Pan-India',
+    tel: '112',
+    isPrimary: false
+  },
+  {
+    number: '1075',
+    title: 'National Health Helpline (MoHFW)',
+    hindiTitle: 'राष्ट्रीय स्वास्थ्य हेल्पलाइन',
+    desc: 'Ministry of Health and Family Welfare official medical guidance and emergency hospital info',
+    badge: 'Govt MoHFW',
+    tel: '1075',
+    isPrimary: false
+  }
+];
 
